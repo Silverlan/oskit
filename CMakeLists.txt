@@ -9,4 +9,6 @@ endif()
 
 pr_init_module(${PROJ_NAME})
 
+pr_add_compile_definitions(${PROJ_NAME} -DPOSKIT_EXPORT)
+
 pr_finalize(${PROJ_NAME})

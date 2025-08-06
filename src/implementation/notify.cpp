@@ -3,6 +3,7 @@
 
 module;
 
+#include "definitions.hpp"
 #ifdef __linux__
 #include <sdbus-c++/sdbus-c++.h>
 #endif
@@ -14,15 +15,15 @@ import :notify;
 
 using namespace pragma::oskit;
 
-class INotificationManager {
-public:
+class DLLPOSKIT INotificationManager {
+  public:
 	virtual bool ShowNotification(const NotificationInfo &info) = 0;
 private:
 };
 
 #ifdef __linux__
-class NotificationManager : public INotificationManager {
-public:
+class DLLPOSKIT NotificationManager : public INotificationManager {
+  public:
 	NotificationManager();
 	virtual bool ShowNotification(const NotificationInfo &info) override;
 private:
@@ -68,8 +69,8 @@ bool NotificationManager::ShowNotification(const NotificationInfo &info) {
 #else
 
 // TODO: Implement for Windows
-class NotificationManager : public INotificationManager {
-public:
+class DLLPOSKIT NotificationManager : public INotificationManager {
+  public:
 	NotificationManager() : INotificationManager {} {}
 	virtual bool ShowNotification(const NotificationInfo &info) override { return false; }
 };

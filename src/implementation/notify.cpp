@@ -6,6 +6,7 @@ module;
 #ifdef __linux__
 #include <sdbus-c++/sdbus-c++.h>
 #endif
+#include <memory>
 
 module pragma.oskit;
 
@@ -69,7 +70,7 @@ bool NotificationManager::ShowNotification(const NotificationInfo &info) {
 // TODO: Implement for Windows
 class NotificationManager : public INotificationManager {
 public:
-	NotificationManager();
+	NotificationManager() : INotificationManager {} {}
 	virtual bool ShowNotification(const NotificationInfo &info) override { return false; }
 };
 

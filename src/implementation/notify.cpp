@@ -6,6 +6,10 @@ module;
 #include "definitions.hpp"
 #ifdef __linux__
 #include <sdbus-c++/sdbus-c++.h>
+#include <sys/mman.h>
+#elif _WIN32
+#include <wintoastlib.h>
+#include <sharedutils/util_string.h>
 #endif
 #include <memory>
 
@@ -38,7 +42,6 @@ NotificationManager::NotificationManager() {
 	);
 }
 
-#include <sys/mman.h>
 bool NotificationManager::ShowNotification(const NotificationInfo &info) {
 	static uint64_t seq = 1;
 	std::string id = "notif-" + std::to_string(seq++);
@@ -66,14 +69,57 @@ bool NotificationManager::ShowNotification(const NotificationInfo &info) {
 	return true;
 }
 
-#else
+#elif _WIN32
 
-// TODO: Implement for Windows
+using namespace WinToastLib;
+
+class WinToastHandlerExample : public IWinToastHandler {
+  public:
+	WinToastHandlerExample() {}
+	// Public interfaces
+	void toastActivated() const override {}
+	void toastActivated(int actionIndex) const override {}
+	void toastActivated(std::wstring response) const override {}
+	void toastDismissed(WinToastDismissalReason state) const override {}
+	void toastFailed() const override {}
+};
+
 class DLLPOSKIT NotificationManager : public INotificationManager {
   public:
 	NotificationManager() : INotificationManager {} {}
-	virtual bool ShowNotification(const NotificationInfo &info) override { return false; }
+	virtual bool ShowNotification(const NotificationInfo &info) override;
 };
+
+bool NotificationManager::ShowNotification(const NotificationInfo &info)
+{
+	if(!WinToast::isCompatible()) {
+		// System not supported
+		return false;
+	}
+	
+	WinToast::instance()->setAppName(ustring::string_to_wstring(info.appName));
+	const auto aumi = WinToast::configureAUMI(L"silverlan", L"pragma", L"pragma", L"1.0.0");
+	WinToast::instance()->setAppUserModelId(aumi);
+
+	if(!WinToast::instance()->initialize()) {
+		// Failed to initialize library
+		return false;
+	}
+
+	WinToastHandlerExample *handler = new WinToastHandlerExample;
+	WinToastTemplate templ = WinToastTemplate(WinToastTemplate::ImageAndText02);
+	templ.setImagePath(ustring::string_to_wstring(info.appIcon));
+	templ.setTextField(ustring::string_to_wstring(info.title), WinToastTemplate::FirstLine);
+	templ.setTextField(ustring::string_to_wstring(info.body), WinToastTemplate::SecondLine);
+	
+	WinToast::WinToastError error;
+	const auto toast_id = WinToast::instance()->showToast(templ, handler, &error);
+	if(toast_id < 0) {
+		// Failed to show toast
+		return false;
+	}
+	return true;
+}
 
 #endif
 

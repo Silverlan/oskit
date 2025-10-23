@@ -9,13 +9,13 @@ module;
 #include <sys/mman.h>
 #elif _WIN32
 #include <wintoastlib.h>
-#include <sharedutils/util_string.h>
 #endif
 #include <memory>
 
 module pragma.oskit;
 
 import :notify;
+import pragma.string;
 
 using namespace pragma::oskit;
 

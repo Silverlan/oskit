@@ -15,7 +15,6 @@ module;
 module pragma.oskit;
 
 import :notify;
-import pragma.string;
 
 using namespace pragma::oskit;
 

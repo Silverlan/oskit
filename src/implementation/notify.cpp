@@ -9,6 +9,7 @@ module;
 #include <sys/mman.h>
 #elif _WIN32
 #include <wintoastlib.h>
+#include <codecvt>
 #endif
 #include <memory>
 
@@ -87,6 +88,12 @@ class DLLPOSKIT NotificationManager : public INotificationManager {
 	virtual bool ShowNotification(const NotificationInfo &info) override;
 };
 
+static std::wstring string_to_wstring(const std::string &str)
+{
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+	return converter.from_bytes(str);
+}
+
 bool NotificationManager::ShowNotification(const NotificationInfo &info)
 {
 	if(!WinToast::isCompatible()) {
@@ -94,7 +101,7 @@ bool NotificationManager::ShowNotification(const NotificationInfo &info)
 		return false;
 	}
 
-	WinToast::instance()->setAppName(ustring::string_to_wstring(info.appName));
+	WinToast::instance()->setAppName(string_to_wstring(info.appName));
 	const auto aumi = WinToast::configureAUMI(L"silverlan", L"pragma", L"pragma", L"1.0.0");
 	WinToast::instance()->setAppUserModelId(aumi);
 
@@ -105,9 +112,9 @@ bool NotificationManager::ShowNotification(const NotificationInfo &info)
 
 	WinToastHandlerExample *handler = new WinToastHandlerExample;
 	WinToastTemplate templ = WinToastTemplate(WinToastTemplate::ImageAndText02);
-	templ.setImagePath(ustring::string_to_wstring(info.appIcon));
-	templ.setTextField(ustring::string_to_wstring(info.title), WinToastTemplate::FirstLine);
-	templ.setTextField(ustring::string_to_wstring(info.body), WinToastTemplate::SecondLine);
+	templ.setImagePath(string_to_wstring(info.appIcon));
+	templ.setTextField(string_to_wstring(info.title), WinToastTemplate::FirstLine);
+	templ.setTextField(string_to_wstring(info.body), WinToastTemplate::SecondLine);
 
 	WinToast::WinToastError error;
 	const auto toast_id = WinToast::instance()->showToast(templ, handler, &error);

@@ -5,8 +5,14 @@ module;
 
 #include "definitions.hpp"
 #ifdef __linux__
+
+#ifdef USE_SDBUS
 #include <sdbus-c++/sdbus-c++.h>
 #include <sys/mman.h>
+#elif USE_LIBNOTIFY
+#include <libnotify/notify.h>
+#endif
+
 #elif _WIN32
 #include <wintoastlib.h>
 #include <codecvt>
@@ -21,11 +27,14 @@ using namespace pragma::oskit;
 
 class DLLPOSKIT INotificationManager {
   public:
+	virtual ~INotificationManager() = default;
 	virtual bool ShowNotification(const NotificationInfo &info) = 0;
   private:
 };
 
 #ifdef __linux__
+
+#ifdef USE_SDBUS
 class DLLPOSKIT NotificationManager : public INotificationManager {
   public:
 	NotificationManager();
@@ -66,6 +75,36 @@ bool NotificationManager::ShowNotification(const NotificationInfo &info)
 
 	return true;
 }
+#elif USE_LIBNOTIFY
+class DLLPOSKIT NotificationManager : public INotificationManager {
+  public:
+	NotificationManager();
+	~NotificationManager() override;
+	virtual bool ShowNotification(const NotificationInfo &info) override;
+};
+
+NotificationManager::NotificationManager() { notify_init("oskit"); }
+
+NotificationManager::~NotificationManager() { notify_uninit(); }
+
+bool NotificationManager::ShowNotification(const NotificationInfo &info)
+{
+	if(!notify_is_initted())
+		return false;
+
+	auto &iconPath = info.appIcon;
+	auto *n = notify_notification_new(info.title.c_str(), info.body.c_str(), iconPath.c_str());
+
+	GError *error = nullptr;
+	auto success = notify_notification_show(n, &error);
+
+	if(!success)
+		g_error_free(error);
+
+	g_object_unref(G_OBJECT(n));
+	return success;
+}
+#endif
 
 #elif _WIN32
 
